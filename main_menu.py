@@ -1,5 +1,6 @@
 import pygame, sys
 from button import Button
+from PIL import Image  # We need the PIL library to read GIFs
 
 pygame.init()
 
@@ -10,8 +11,20 @@ width = info.current_w
 SCREEN = pygame.display.set_mode((width, height), pygame.SCALED | pygame.NOFRAME)
 pygame.display.set_caption("Menu")
 
-BG = pygame.image.load("__pycache__\greek_pic_one.jpg")
-BG = pygame.transform.scale(BG, (width, height))
+# Function to extract frames from a GIF and scale them to the screen size
+def extract_frames(gif_path, width, height):
+    frames = []
+    gif = Image.open(gif_path)
+    for frame in range(gif.n_frames):
+        gif.seek(frame)
+        frame_image = gif.convert("RGBA")  # Convert to RGBA
+        frame_image = frame_image.resize((width, height))  # Resize to fit the screen
+        frame_surface = pygame.image.fromstring(frame_image.tobytes(), frame_image.size, frame_image.mode)
+        frames.append(frame_surface)
+    return frames
+
+# Load GIF frames and scale them to the screen size
+frames = extract_frames("__pycache__\greece.gif", width, height)
 
 def get_font(size):  # Returns Press-Start-2P in the desired size
     return pygame.font.Font(r"C:\Users\mccau\.vscode\__pycache__\font.ttf", size)
@@ -69,8 +82,12 @@ def options():
         pygame.display.update()
 
 def main_menu():
+    frame_index = 0
+    clock = pygame.time.Clock()
+
     while True:
-        SCREEN.blit(BG, (0, 0))
+        # Draw the GIF background frame, which is now scaled to fit the whole screen
+        SCREEN.blit(frames[frame_index], (0, 0))
 
         MENU_MOUSE_POS = pygame.mouse.get_pos()
 
@@ -82,7 +99,6 @@ def main_menu():
         total_buttons_height = button_height * 3
         spacing = (height - total_buttons_height) // 4  
 
-      
         PLAY_BUTTON = Button(image=pygame.image.load("__pycache__\Play Rect.png"), pos=(width // 2, spacing + button_height // 3), 
                             text_input="PLAY", font=get_font(75), base_color="#d7fcd4", hovering_color="White")
         OPTIONS_BUTTON = Button(image=pygame.image.load("__pycache__\Options Rect.png"), pos=(width // 2, spacing * 2 + button_height + button_height // 3), 
@@ -106,6 +122,12 @@ def main_menu():
                 if QUIT_BUTTON.checkForInput(MENU_MOUSE_POS):
                     pygame.quit()
                     sys.exit()
+
+        # Update the GIF frame index
+        frame_index = (frame_index + 1) % len(frames)
+
+        # Control the frame rate of the GIF (e.g., 10 FPS)
+        clock.tick(10)
 
         pygame.display.update()
 

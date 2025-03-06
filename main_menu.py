@@ -1,11 +1,12 @@
-import pygame, sys
+import pygame
+import sys
 from button import Button
 from PIL import Image  # We need the PIL library to read GIFs
 
 pygame.init()
 
 # Initialize pygame mixer explicitly
-pygame.mixer.init(frequency=22050, size=-16, channels=2, buffer=512)  # Initialize with more options if needed
+pygame.mixer.init(frequency=22050, size=-16, channels=2, buffer=512)
 
 info = pygame.display.Info()
 height = info.current_h
@@ -30,10 +31,10 @@ def extract_frames(gif_path, width, height):
     return frames
 
 # Load GIF frames and scale them to the screen size
-frames = extract_frames("__pycache__/greece.gif", width, height)
+frames = extract_frames("game/greece.gif", width, height)
 
 def get_font(size):  # Returns Press-Start-2P in the desired size
-    return pygame.font.Font(r"C:\Users\mccau\.vscode\__pycache__\font.ttf", size)
+    return pygame.font.Font(r"game/font.ttf", size)
 
 def play():
     while True:
@@ -61,11 +62,15 @@ def play():
 
         pygame.display.update()
 
+
 def options():
     global music_playing  # Reference the global music_playing flag
     volume = pygame.mixer.music.get_volume()  # Get the current volume (0.0 to 1.0)
     slider_x = width // 2 - 100  # Starting position for the volume slider
     slider_width = 200  # Width of the slider
+    slider_y = height // 2 + 50  # Vertical position of the slider
+    slider_height = 10  # Height of the slider bar
+    dragging = False  # Flag to check if the user is dragging the slider
 
     while True:
         OPTIONS_MOUSE_POS = pygame.mouse.get_pos()
@@ -83,12 +88,12 @@ def options():
         OPTIONS_BACK.update(SCREEN)
 
         # Volume slider bar
-        pygame.draw.rect(SCREEN, (200, 200, 200), (slider_x, height // 2 + 50, slider_width, 10))  # Background bar
-        pygame.draw.rect(SCREEN, (0, 255, 0), (slider_x, height // 2 + 50, volume * slider_width, 10))  # Current volume
+        pygame.draw.rect(SCREEN, (200, 200, 200), (slider_x, slider_y, slider_width, slider_height))  # Background bar
+        pygame.draw.rect(SCREEN, (0, 255, 0), (slider_x, slider_y, volume * slider_width, slider_height))  # Current volume
 
         # Volume knob
         volume_knob_x = slider_x + (volume * slider_width) - 10  # Position of the knob
-        pygame.draw.circle(SCREEN, (255, 0, 0), (volume_knob_x, height // 2 + 55), 15)
+        pygame.draw.circle(SCREEN, (255, 0, 0), (volume_knob_x, slider_y + 5), 15)
 
         volume_text = get_font(30).render(f"Volume: {int(volume * 100)}%", True, "Black")
         volume_text_rect = volume_text.get_rect(center=(width // 2, height // 2 + 100))
@@ -103,9 +108,19 @@ def options():
                 if OPTIONS_BACK.checkForInput(OPTIONS_MOUSE_POS):
                     main_menu()
 
-            # Adjust volume when dragging the slider
-            if event.type == pygame.MOUSEMOTION and event.buttons[0] == 1:  # Left mouse button is held down
-                if slider_x <= OPTIONS_MOUSE_POS[0] <= slider_x + slider_width:
+                # Check if the click is inside the slider's bounds (both horizontally and vertically)
+                if slider_x <= OPTIONS_MOUSE_POS[0] <= slider_x + slider_width and slider_y <= OPTIONS_MOUSE_POS[1] <= slider_y + slider_height:
+                    dragging = True
+                    volume = (OPTIONS_MOUSE_POS[0] - slider_x) / slider_width
+                    pygame.mixer.music.set_volume(volume)  # Adjust the music volume
+
+            if event.type == pygame.MOUSEBUTTONUP:
+                # Stop dragging the slider when the mouse button is released
+                dragging = False
+
+            # Adjust volume only when dragging the slider
+            if event.type == pygame.MOUSEMOTION and dragging:
+                if slider_x <= OPTIONS_MOUSE_POS[0] <= slider_x + slider_width and slider_y <= OPTIONS_MOUSE_POS[1] <= slider_y + slider_height:
                     volume = (OPTIONS_MOUSE_POS[0] - slider_x) / slider_width
                     pygame.mixer.music.set_volume(volume)  # Adjust the music volume
 
@@ -119,7 +134,7 @@ def main_menu():
     if not music_playing:
         try:
             # Attempt to load and play the background music only if it's not already playing
-            pygame.mixer.music.load("__pycache__/Goddess.mp3")  # Replace with your music file path
+            pygame.mixer.music.load("game/Goddess.mp3")  # Replace with your music file path
             pygame.mixer.music.set_volume(1.0)  # Set initial volume to 100%
             pygame.mixer.music.play(-1, 0.0)  # Loop the music indefinitely
             music_playing = True  # Set flag to True once the music is playing
@@ -142,11 +157,11 @@ def main_menu():
         total_buttons_height = button_height * 3
         spacing = (height - total_buttons_height) // 4  
 
-        PLAY_BUTTON = Button(image=pygame.image.load("__pycache__/Play Rect.png"), pos=(width // 2, spacing + button_height // 3), 
+        PLAY_BUTTON = Button(image=pygame.image.load("game/Play Rect.png"), pos=(width // 2, spacing + button_height // 3), 
                             text_input="PLAY", font=get_font(75), base_color="#d7fcd4", hovering_color="White")
-        OPTIONS_BUTTON = Button(image=pygame.image.load("__pycache__/Options Rect.png"), pos=(width // 2, spacing * 2 + button_height + button_height // 3), 
+        OPTIONS_BUTTON = Button(image=pygame.image.load("game/Options Rect.png"), pos=(width // 2, spacing * 2 + button_height + button_height // 3), 
                             text_input="OPTIONS", font=get_font(75), base_color="#d7fcd4", hovering_color="White")
-        QUIT_BUTTON = Button(image=pygame.image.load("__pycache__/Quit Rect.png"), pos=(width // 2, spacing * 3 + button_height * 2 + button_height // 3), 
+        QUIT_BUTTON = Button(image=pygame.image.load("game/Quit Rect.png"), pos=(width // 2, spacing * 3 + button_height * 2 + button_height // 3), 
                             text_input="QUIT", font=get_font(75), base_color="#d7fcd4", hovering_color="White")
 
         for button in [PLAY_BUTTON, OPTIONS_BUTTON, QUIT_BUTTON]:
@@ -176,3 +191,4 @@ def main_menu():
 
 # Run the main menu
 main_menu()
+

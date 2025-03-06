@@ -5,7 +5,7 @@ from PIL import Image  # We need the PIL library to read GIFs
 pygame.init()
 
 # Initialize pygame mixer explicitly
-pygame.mixer.init()
+pygame.mixer.init(frequency=22050, size=-16, channels=2, buffer=512)  # Initialize with more options if needed
 
 info = pygame.display.Info()
 height = info.current_h

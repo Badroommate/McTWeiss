@@ -4,12 +4,18 @@ from PIL import Image  # We need the PIL library to read GIFs
 
 pygame.init()
 
+# Initialize pygame mixer explicitly
+pygame.mixer.init()
+
 info = pygame.display.Info()
 height = info.current_h
 width = info.current_w
 
 SCREEN = pygame.display.set_mode((width, height), pygame.SCALED | pygame.NOFRAME)
 pygame.display.set_caption("Menu")
+
+# Flag to check if the music is already playing
+music_playing = False
 
 # Function to extract frames from a GIF and scale them to the screen size
 def extract_frames(gif_path, width, height):
@@ -24,7 +30,7 @@ def extract_frames(gif_path, width, height):
     return frames
 
 # Load GIF frames and scale them to the screen size
-frames = extract_frames("__pycache__\greece.gif", width, height)
+frames = extract_frames("__pycache__/greece.gif", width, height)
 
 def get_font(size):  # Returns Press-Start-2P in the desired size
     return pygame.font.Font(r"C:\Users\mccau\.vscode\__pycache__\font.ttf", size)
@@ -82,8 +88,21 @@ def options():
         pygame.display.update()
 
 def main_menu():
+    global music_playing  # Reference the global music_playing flag
     frame_index = 0
     clock = pygame.time.Clock()
+
+    if not music_playing:
+        try:
+            # Attempt to load and play the background music only if it's not already playing
+            pygame.mixer.music.load("__pycache__/Goddess.mp3")  # Replace with your music file path
+            pygame.mixer.music.set_volume(0.1)  # Set volume to a valid range (0.0 to 1.0)
+            pygame.mixer.music.play(-1, 0.0)  # Loop the music indefinitely
+            music_playing = True  # Set flag to True once the music is playing
+            print("Background music is playing!")  # Debug message to confirm music is playing
+        except pygame.error as e:
+            print(f"Error loading music: {e}")  # If there's an issue, this will output the error message
+            pygame.mixer.music.stop()  # Ensure music is stopped if there’s an issue
 
     while True:
         # Draw the GIF background frame, which is now scaled to fit the whole screen
@@ -99,11 +118,11 @@ def main_menu():
         total_buttons_height = button_height * 3
         spacing = (height - total_buttons_height) // 4  
 
-        PLAY_BUTTON = Button(image=pygame.image.load("__pycache__\Play Rect.png"), pos=(width // 2, spacing + button_height // 3), 
+        PLAY_BUTTON = Button(image=pygame.image.load("__pycache__/Play Rect.png"), pos=(width // 2, spacing + button_height // 3), 
                             text_input="PLAY", font=get_font(75), base_color="#d7fcd4", hovering_color="White")
-        OPTIONS_BUTTON = Button(image=pygame.image.load("__pycache__\Options Rect.png"), pos=(width // 2, spacing * 2 + button_height + button_height // 3), 
+        OPTIONS_BUTTON = Button(image=pygame.image.load("__pycache__/Options Rect.png"), pos=(width // 2, spacing * 2 + button_height + button_height // 3), 
                             text_input="OPTIONS", font=get_font(75), base_color="#d7fcd4", hovering_color="White")
-        QUIT_BUTTON = Button(image=pygame.image.load("__pycache__\Quit Rect.png"), pos=(width // 2, spacing * 3 + button_height * 2 + button_height // 3), 
+        QUIT_BUTTON = Button(image=pygame.image.load("__pycache__/Quit Rect.png"), pos=(width // 2, spacing * 3 + button_height * 2 + button_height // 3), 
                             text_input="QUIT", font=get_font(75), base_color="#d7fcd4", hovering_color="White")
 
         for button in [PLAY_BUTTON, OPTIONS_BUTTON, QUIT_BUTTON]:
@@ -131,4 +150,5 @@ def main_menu():
 
         pygame.display.update()
 
+# Run the main menu
 main_menu()

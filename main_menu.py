@@ -41,7 +41,7 @@ def play():
 
         SCREEN.fill("black")
 
-        PLAY_TEXT = get_font(45).render("This is the start screen", True, "White")
+        PLAY_TEXT = get_font(30).render("It was a cold winter night in the capital of Ancient Sparta", True, "White")
         PLAY_RECT = PLAY_TEXT.get_rect(center=(width // 2, height // 4))  
         SCREEN.blit(PLAY_TEXT, PLAY_RECT)
 
@@ -62,6 +62,11 @@ def play():
         pygame.display.update()
 
 def options():
+    global music_playing  # Reference the global music_playing flag
+    volume = pygame.mixer.music.get_volume()  # Get the current volume (0.0 to 1.0)
+    slider_x = width // 2 - 100  # Starting position for the volume slider
+    slider_width = 200  # Width of the slider
+
     while True:
         OPTIONS_MOUSE_POS = pygame.mouse.get_pos()
 
@@ -77,13 +82,32 @@ def options():
         OPTIONS_BACK.changeColor(OPTIONS_MOUSE_POS)
         OPTIONS_BACK.update(SCREEN)
 
+        # Volume slider bar
+        pygame.draw.rect(SCREEN, (200, 200, 200), (slider_x, height // 2 + 50, slider_width, 10))  # Background bar
+        pygame.draw.rect(SCREEN, (0, 255, 0), (slider_x, height // 2 + 50, volume * slider_width, 10))  # Current volume
+
+        # Volume knob
+        volume_knob_x = slider_x + (volume * slider_width) - 10  # Position of the knob
+        pygame.draw.circle(SCREEN, (255, 0, 0), (volume_knob_x, height // 2 + 55), 15)
+
+        volume_text = get_font(30).render(f"Volume: {int(volume * 100)}%", True, "Black")
+        volume_text_rect = volume_text.get_rect(center=(width // 2, height // 2 + 100))
+        SCREEN.blit(volume_text, volume_text_rect)
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
+
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if OPTIONS_BACK.checkForInput(OPTIONS_MOUSE_POS):
                     main_menu()
+
+            # Adjust volume when dragging the slider
+            if event.type == pygame.MOUSEMOTION and event.buttons[0] == 1:  # Left mouse button is held down
+                if slider_x <= OPTIONS_MOUSE_POS[0] <= slider_x + slider_width:
+                    volume = (OPTIONS_MOUSE_POS[0] - slider_x) / slider_width
+                    pygame.mixer.music.set_volume(volume)  # Adjust the music volume
 
         pygame.display.update()
 
@@ -96,7 +120,7 @@ def main_menu():
         try:
             # Attempt to load and play the background music only if it's not already playing
             pygame.mixer.music.load("__pycache__/Goddess.mp3")  # Replace with your music file path
-            pygame.mixer.music.set_volume(0.1)  # Set volume to a valid range (0.0 to 1.0)
+            pygame.mixer.music.set_volume(1.0)  # Set initial volume to 100%
             pygame.mixer.music.play(-1, 0.0)  # Loop the music indefinitely
             music_playing = True  # Set flag to True once the music is playing
             print("Background music is playing!")  # Debug message to confirm music is playing

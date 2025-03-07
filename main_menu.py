@@ -1,12 +1,11 @@
-import pygame
-import sys
+import pygame, sys
 from button import Button
 from PIL import Image  # We need the PIL library to read GIFs
 
 pygame.init()
 
 # Initialize pygame mixer explicitly
-pygame.mixer.init(frequency=22050, size=-16, channels=2, buffer=512)
+pygame.mixer.init(frequency=22050, size=-16, channels=2, buffer=512)  # Initialize with more options if needed
 
 info = pygame.display.Info()
 height = info.current_h
@@ -31,46 +30,82 @@ def extract_frames(gif_path, width, height):
     return frames
 
 # Load GIF frames and scale them to the screen size
-frames = extract_frames("game/greece.gif", width, height)
+frames = extract_frames("McCauley_Project/images/greece.gif", width, height)
 
 def get_font(size):  # Returns Press-Start-2P in the desired size
-    return pygame.font.Font(r"game/font.ttf", size)
-
+    return pygame.font.Font(r"McCauley_Project/font.ttf", size)
+player_pos = pygame.Vector2(400,400)
+flip = False
 def play():
+    
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            sys.exit()
+    key = pygame.key.get_pressed()
+    if key[pygame.K_BACKSPACE]:
+        main_menu()
+    
+    
+    
+    
+    global flip
+    player_image = pygame.image.load("McCauley_Project/images/spartan.png")
+    player_image = pygame.transform.scale(player_image, (200,200))
     while True:
         PLAY_MOUSE_POS = pygame.mouse.get_pos()
 
-        SCREEN.fill("black")
 
-        PLAY_TEXT = get_font(30).render("It was a cold winter night in the capital of Ancient Sparta", True, "White")
-        PLAY_RECT = PLAY_TEXT.get_rect(center=(width // 2, height // 4))  
-        SCREEN.blit(PLAY_TEXT, PLAY_RECT)
-
-        PLAY_BACK = Button(image=None, pos=(width // 2, height // 2), 
-                            text_input="BACK", font=get_font(75), base_color="White", hovering_color="Green")
-
-        PLAY_BACK.changeColor(PLAY_MOUSE_POS)
-        PLAY_BACK.update(SCREEN)
-
+        
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                if PLAY_BACK.checkForInput(PLAY_MOUSE_POS):
-                    main_menu()
+                pass
+            key = pygame.key.get_pressed()
+            if key[pygame.K_BACKSPACE]:
+                main_menu()
+        
+        
+        
+        pygame.event.get()
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_w]:
+            player_pos.y -= 2 
+        if keys[pygame.K_s]:
+            player_pos.y += 2 
+        if keys[pygame.K_a]:
+            player_pos.x -= 2
+            if flip!=True:
+                player_image = pygame.transform.flip(player_image,1,0)
+                flip = True
+        if keys[pygame.K_d]:
+            if flip!=False:
+                player_image = pygame.transform.flip(player_image,1,0)
+                flip = False 
+            player_pos.x += 2
+        SCREEN.fill("black")
+    
+
+        SCREEN.blit(player_image, player_pos)
+        # PLAY_TEXT = get_font(30).render("It was a cold winter night in the capital of Ancient Sparta", True, "White")
+        # PLAY_RECT = PLAY_TEXT.get_rect(center=(width // 2, height // 4))  
+        # SCREEN.blit(PLAY_TEXT, PLAY_RECT)
+
+        # PLAY_BACK = Button(image=None, pos=(width // 2, height // 2), 
+        #                     text_input="BACK", font=get_font(75), base_color="White", hovering_color="Green")
+
+        # PLAY_BACK.changeColor(PLAY_MOUSE_POS)
+        # PLAY_BACK.update(SCREEN)
+
+
+
 
         pygame.display.update()
-
 
 def options():
     global music_playing  # Reference the global music_playing flag
     volume = pygame.mixer.music.get_volume()  # Get the current volume (0.0 to 1.0)
     slider_x = width // 2 - 100  # Starting position for the volume slider
     slider_width = 200  # Width of the slider
-    slider_y = height // 2 + 50  # Vertical position of the slider
-    slider_height = 10  # Height of the slider bar
-    dragging = False  # Flag to check if the user is dragging the slider
 
     while True:
         OPTIONS_MOUSE_POS = pygame.mouse.get_pos()
@@ -88,12 +123,12 @@ def options():
         OPTIONS_BACK.update(SCREEN)
 
         # Volume slider bar
-        pygame.draw.rect(SCREEN, (200, 200, 200), (slider_x, slider_y, slider_width, slider_height))  # Background bar
-        pygame.draw.rect(SCREEN, (0, 255, 0), (slider_x, slider_y, volume * slider_width, slider_height))  # Current volume
+        pygame.draw.rect(SCREEN, (200, 200, 200), (slider_x, height // 2 + 50, slider_width, 10))  # Background bar
+        pygame.draw.rect(SCREEN, (0, 255, 0), (slider_x, height // 2 + 50, volume * slider_width, 10))  # Current volume
 
         # Volume knob
         volume_knob_x = slider_x + (volume * slider_width) - 10  # Position of the knob
-        pygame.draw.circle(SCREEN, (255, 0, 0), (volume_knob_x, slider_y + 5), 15)
+        pygame.draw.circle(SCREEN, (255, 0, 0), (volume_knob_x, height // 2 + 55), 15)
 
         volume_text = get_font(30).render(f"Volume: {int(volume * 100)}%", True, "Black")
         volume_text_rect = volume_text.get_rect(center=(width // 2, height // 2 + 100))
@@ -108,19 +143,9 @@ def options():
                 if OPTIONS_BACK.checkForInput(OPTIONS_MOUSE_POS):
                     main_menu()
 
-                # Check if the click is inside the slider's bounds (both horizontally and vertically)
-                if slider_x <= OPTIONS_MOUSE_POS[0] <= slider_x + slider_width and slider_y <= OPTIONS_MOUSE_POS[1] <= slider_y + slider_height:
-                    dragging = True
-                    volume = (OPTIONS_MOUSE_POS[0] - slider_x) / slider_width
-                    pygame.mixer.music.set_volume(volume)  # Adjust the music volume
-
-            if event.type == pygame.MOUSEBUTTONUP:
-                # Stop dragging the slider when the mouse button is released
-                dragging = False
-
-            # Adjust volume only when dragging the slider
-            if event.type == pygame.MOUSEMOTION and dragging:
-                if slider_x <= OPTIONS_MOUSE_POS[0] <= slider_x + slider_width and slider_y <= OPTIONS_MOUSE_POS[1] <= slider_y + slider_height:
+            # Adjust volume when dragging the slider
+            if event.type == pygame.MOUSEMOTION and event.buttons[0] == 1:  # Left mouse button is held down
+                if slider_x <= OPTIONS_MOUSE_POS[0] <= slider_x + slider_width:
                     volume = (OPTIONS_MOUSE_POS[0] - slider_x) / slider_width
                     pygame.mixer.music.set_volume(volume)  # Adjust the music volume
 
@@ -134,7 +159,7 @@ def main_menu():
     if not music_playing:
         try:
             # Attempt to load and play the background music only if it's not already playing
-            pygame.mixer.music.load("game/Goddess.mp3")  # Replace with your music file path
+            pygame.mixer.music.load("McCauley_Project/Goddess.mp3")  # Replace with your music file path
             pygame.mixer.music.set_volume(1.0)  # Set initial volume to 100%
             pygame.mixer.music.play(-1, 0.0)  # Loop the music indefinitely
             music_playing = True  # Set flag to True once the music is playing
@@ -157,11 +182,11 @@ def main_menu():
         total_buttons_height = button_height * 3
         spacing = (height - total_buttons_height) // 4  
 
-        PLAY_BUTTON = Button(image=pygame.image.load("game/Play Rect.png"), pos=(width // 2, spacing + button_height // 3), 
+        PLAY_BUTTON = Button(image=pygame.image.load("McCauley_Project/images/Play Rect.png"), pos=(width // 2, spacing + button_height // 3), 
                             text_input="PLAY", font=get_font(75), base_color="#d7fcd4", hovering_color="White")
-        OPTIONS_BUTTON = Button(image=pygame.image.load("game/Options Rect.png"), pos=(width // 2, spacing * 2 + button_height + button_height // 3), 
+        OPTIONS_BUTTON = Button(image=pygame.image.load("McCauley_Project/images/Options Rect.png"), pos=(width // 2, spacing * 2 + button_height + button_height // 3), 
                             text_input="OPTIONS", font=get_font(75), base_color="#d7fcd4", hovering_color="White")
-        QUIT_BUTTON = Button(image=pygame.image.load("game/Quit Rect.png"), pos=(width // 2, spacing * 3 + button_height * 2 + button_height // 3), 
+        QUIT_BUTTON = Button(image=pygame.image.load("McCauley_Project/images/Quit Rect.png"), pos=(width // 2, spacing * 3 + button_height * 2 + button_height // 3), 
                             text_input="QUIT", font=get_font(75), base_color="#d7fcd4", hovering_color="White")
 
         for button in [PLAY_BUTTON, OPTIONS_BUTTON, QUIT_BUTTON]:

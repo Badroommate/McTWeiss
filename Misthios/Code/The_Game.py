@@ -115,7 +115,7 @@ def options():
 
         SCREEN.fill("white")
 
-        OPTIONS_TEXT = get_font(45).render("OPTIONS", True, "Black")
+        OPTIONS_TEXT = get_font(60).render("OPTIONS", True, "Black")
         OPTIONS_RECT = OPTIONS_TEXT.get_rect(center=(width // 2, height // 4)) 
         SCREEN.blit(OPTIONS_TEXT, OPTIONS_RECT)
 

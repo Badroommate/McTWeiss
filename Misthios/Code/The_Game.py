@@ -30,10 +30,10 @@ def extract_frames(gif_path, width, height):
     return frames
 
 # Load GIF frames and scale them to the screen size
-frames = extract_frames("game/greece.gif", width, height)
+frames = extract_frames("images/greece.gif", width, height)
 
 def get_font(size):  # Returns Press-Start-2P in the desired size
-    return pygame.font.Font(r"game/font.ttf", size)
+    return pygame.font.Font(r"Code/font.ttf", size)
 player_pos = pygame.Vector2(400,400)
 flip = False
 def play():
@@ -50,7 +50,7 @@ def play():
     
     
     global flip
-    player_image = pygame.image.load("game/spartan.png")
+    player_image = pygame.image.load("images/spartan.png")
     player_image = pygame.transform.scale(player_image, (200,200))
     while True:
         PLAY_MOUSE_POS = pygame.mouse.get_pos()
@@ -174,7 +174,7 @@ def main_menu():
     if not music_playing:
         try:
             # Attempt to load and play the background music only if it's not already playing
-            pygame.mixer.music.load("game/Goddess.mp3")  # Replace with your music file path
+            pygame.mixer.music.load("sound/Goddess.mp3")  # Replace with your music file path
             pygame.mixer.music.set_volume(1.0)  # Set initial volume to 100%
             pygame.mixer.music.play(-1, 0.0)  # Loop the music indefinitely
             music_playing = True  # Set flag to True once the music is playing
@@ -197,11 +197,11 @@ def main_menu():
         total_buttons_height = button_height * 3
         spacing = (height - total_buttons_height) // 4  
 
-        PLAY_BUTTON = Button(image=pygame.image.load("game/Play Rect.png"), pos=(width // 2, spacing + button_height // 3), 
+        PLAY_BUTTON = Button(image=pygame.image.load("images/Play Rect.png"), pos=(width // 2, spacing + button_height // 3), 
                             text_input="PLAY", font=get_font(75), base_color="#d7fcd4", hovering_color="White")
-        OPTIONS_BUTTON = Button(image=pygame.image.load("game/Options Rect.png"), pos=(width // 2, spacing * 2 + button_height + button_height // 3), 
+        OPTIONS_BUTTON = Button(image=pygame.image.load("images/Options Rect.png"), pos=(width // 2, spacing * 2 + button_height + button_height // 3), 
                             text_input="OPTIONS", font=get_font(75), base_color="#d7fcd4", hovering_color="White")
-        QUIT_BUTTON = Button(image=pygame.image.load("game/Quit Rect.png"), pos=(width // 2, spacing * 3 + button_height * 2 + button_height // 3), 
+        QUIT_BUTTON = Button(image=pygame.image.load("images/Quit Rect.png"), pos=(width // 2, spacing * 3 + button_height * 2 + button_height // 3), 
                             text_input="QUIT", font=get_font(75), base_color="#d7fcd4", hovering_color="White")
 
         for button in [PLAY_BUTTON, OPTIONS_BUTTON, QUIT_BUTTON]:

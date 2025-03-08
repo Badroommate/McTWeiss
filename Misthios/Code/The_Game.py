@@ -70,9 +70,6 @@ def play():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
-            key = pygame.key.get_pressed()
-            if key[pygame.K_BACKSPACE]:
-                main_menu()
 
         # Player movement
         keys = pygame.key.get_pressed()
@@ -236,7 +233,7 @@ def draw_timer(screen, start_ticks):
 
 def game_over():
     retry_button = Button(image=None, pos=(width // 2, height // 2 + 50), text_input="RETRY", font=get_font(50), base_color="Red", hovering_color="Green")
-    quit_button = Button(image=None, pos=(width // 2, height // 2 + 150), text_input="QUIT", font=get_font(50), base_color="Red", hovering_color="Green")
+    quit_button = Button(image=None, pos=(width // 2, height // 2 + 150), text_input="MAIN MENU", font=get_font(50), base_color="Red", hovering_color="Green")
 
     while True:
         SCREEN.fill("black")
@@ -261,8 +258,7 @@ def game_over():
                 if retry_button.checkForInput(pygame.mouse.get_pos()):
                     play()  # Restart the game
                 if quit_button.checkForInput(pygame.mouse.get_pos()):
-                    pygame.quit()
-                    sys.exit()
+                    main_menu()  # Go back to the main menu instead of quitting the game
 
         pygame.display.update()
 
@@ -324,10 +320,10 @@ def main_menu():
         # Update the GIF frame index
         frame_index = (frame_index + 1) % len(frames)
 
-        # Control the frame rate of the GIF (e.g., 10 FPS)
+        # Control the frame rate (10 FPS)
         clock.tick(10)
 
         pygame.display.update()
 
-# Run the main menu
+# Start the main menu
 main_menu()

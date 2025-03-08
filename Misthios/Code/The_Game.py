@@ -34,70 +34,84 @@ frames = extract_frames("Misthios/images/greece.gif", width, height)
 
 def get_font(size):  # Returns Press-Start-2P in the desired size
     return pygame.font.Font(r"Misthios/Code/font.ttf", size)
-player_pos = pygame.Vector2(400,400)
+
 flip = False
 def play():
-    
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            pygame.quit()
-            sys.exit()
-    key = pygame.key.get_pressed()
-    if key[pygame.K_BACKSPACE]:
-        main_menu()
-    
-    
-    
-    
     global flip
     player_image = pygame.image.load("Misthios/images/spartan.png")
-    player_image = pygame.transform.scale(player_image, (200,200))
+    player_image = pygame.transform.scale(player_image, (200, 200))
+    
+    # Load enemy image
+    enemy_image = pygame.image.load("Misthios/images/snake.png")
+    enemy_image = pygame.transform.scale(enemy_image, (200, 200))
+
+    # Initial positions
+    player_pos = pygame.Vector2(400, 400)
+    enemy_pos = pygame.Vector2(800, 400)  # Start position of the enemy
+    
+    player_speed = 2
+    enemy_speed = player_speed * 0.50  # Enemy moves at 2/4 of the player's speed
+
+    # Health parameters
+    max_health = 100
+    player_health = max_health
+
+    # Cooldown variables
+    last_damage_time = 0  # Last time the player took damage
+    damage_cooldown = 1500  # 1.5 seconds cooldown in milliseconds
+
     while True:
         PLAY_MOUSE_POS = pygame.mouse.get_pos()
 
-
-        
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                pass
+                pygame.quit()
+                sys.exit()
             key = pygame.key.get_pressed()
             if key[pygame.K_BACKSPACE]:
                 main_menu()
-        
-        
-        
-        pygame.event.get()
+
+        # Player movement
         keys = pygame.key.get_pressed()
         if keys[pygame.K_w]:
-            player_pos.y -= 2 
+            player_pos.y -= player_speed
         if keys[pygame.K_s]:
-            player_pos.y += 2 
+            player_pos.y += player_speed
         if keys[pygame.K_a]:
-            player_pos.x -= 2
-            if flip!=True:
-                player_image = pygame.transform.flip(player_image,1,0)
+            player_pos.x -= player_speed
+            if not flip:
+                player_image = pygame.transform.flip(player_image, 1, 0)
                 flip = True
         if keys[pygame.K_d]:
-            if flip!=False:
-                player_image = pygame.transform.flip(player_image,1,0)
-                flip = False 
-            player_pos.x += 2
+            if flip:
+                player_image = pygame.transform.flip(player_image, 1, 0)
+                flip = False
+            player_pos.x += player_speed
+
+        # Enemy movement: Calculate direction to player and move at 2/4 speed
+        direction = player_pos - enemy_pos
+        if direction.length() != 0:  # Avoid division by zero
+            direction.normalize_ip()  # Normalize the direction vector
+            enemy_pos += direction * enemy_speed  # Move the enemy at 2/4 the speed of the player
+
+        # Collision detection: If the player and enemy touch, check cooldown and lose health
+        if player_pos.distance_to(enemy_pos) < 50:  # Adjust the threshold as needed
+            current_time = pygame.time.get_ticks()  # Get the current time in milliseconds
+            if current_time - last_damage_time >= damage_cooldown:  # Check if cooldown is over
+                player_health -= 10
+                last_damage_time = current_time  # Update the last damage time
+                if player_health <= 0:
+                    player_health = 0
+
+        # Fill the screen with black
         SCREEN.fill("black")
-    
-
+        
+        # Draw player and enemy
         SCREEN.blit(player_image, player_pos)
-        # PLAY_TEXT = get_font(30).render("It was a cold winter night in the capital of Ancient Sparta", True, "White")
-        # PLAY_RECT = PLAY_TEXT.get_rect(center=(width // 2, height // 4))  
-        # SCREEN.blit(PLAY_TEXT, PLAY_RECT)
+        SCREEN.blit(enemy_image, enemy_pos)
 
-        # PLAY_BACK = Button(image=None, pos=(width // 2, height // 2), 
-        #                     text_input="BACK", font=get_font(75), base_color="White", hovering_color="Green")
-
-        # PLAY_BACK.changeColor(PLAY_MOUSE_POS)
-        # PLAY_BACK.update(SCREEN)
-
-
-
+        # Draw the health bar
+        draw_health_bar(SCREEN, player_health, max_health, width, height)
 
         pygame.display.update()
 
@@ -166,6 +180,29 @@ def options():
 
         pygame.display.update()
 
+def draw_health_bar(screen, health, max_health, width, height):
+    # Health bar parameters
+    bar_width = 300
+    bar_height = 25
+    bar_x = (width - bar_width) // 2
+    bar_y = height - bar_height - 20  # Position at the bottom middle of the screen
+
+    # Draw the background of the health bar (gray with no corners)
+    pygame.draw.rect(screen, (169, 169, 169), (bar_x, bar_y, bar_width, bar_height), border_radius=8)
+
+    # Calculate the width of the health portion
+    health_width = (health / max_health) * bar_width
+
+    # Draw the current health portion (red rectangle)
+    pygame.draw.rect(screen, (255, 0, 0), (bar_x, bar_y, health_width, bar_height), border_radius=8)
+
+    # Display the health percentage (centered inside the bar)
+    health_percentage = f"{int((health / max_health) * 100)}%"
+    font = pygame.font.Font(None, 30)  # Choose a font and size
+    text = font.render(health_percentage, True, (255, 255, 255))  # White color for the text
+    text_rect = text.get_rect(center=(bar_x + bar_width // 2, bar_y + bar_height // 2))  # Center the text
+    screen.blit(text, text_rect)
+
 def main_menu():
     global music_playing  # Reference the global music_playing flag
     frame_index = 0
@@ -174,7 +211,7 @@ def main_menu():
     if not music_playing:
         try:
             # Attempt to load and play the background music only if it's not already playing
-            pygame.mixer.music.load("sound/Goddess.mp3")  # Replace with your music file path
+            pygame.mixer.music.load("Misthios/sound/Goddess.mp3")  # Replace with your music file path
             pygame.mixer.music.set_volume(1.0)  # Set initial volume to 100%
             pygame.mixer.music.play(-1, 0.0)  # Loop the music indefinitely
             music_playing = True  # Set flag to True once the music is playing
@@ -228,9 +265,6 @@ def main_menu():
         clock.tick(10)
 
         pygame.display.update()
-
-# Run the main menu
-main_menu()
 
 # Run the main menu
 main_menu()

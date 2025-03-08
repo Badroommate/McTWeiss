@@ -1,4 +1,4 @@
-pygame, sys
+import pygame, sys
 from button import Button
 from PIL import Image  # We need the PIL library to read GIFs
 

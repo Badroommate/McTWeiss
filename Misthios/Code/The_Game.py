@@ -60,14 +60,11 @@ def play():
     last_damage_time = 0  # Last time the player took damage
     damage_cooldown = 1500  # 1.5 seconds cooldown in milliseconds
 
-    # Game loop
+    # Start time for the timer
+    start_ticks = pygame.time.get_ticks()  # Get the start time in milliseconds
+
     while True:
         PLAY_MOUSE_POS = pygame.mouse.get_pos()
-
-        # Check if the player has lost all health
-        if player_health <= 0:
-            display_game_over()
-            return  # Exit the game loop
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -77,23 +74,22 @@ def play():
             if key[pygame.K_BACKSPACE]:
                 main_menu()
 
-        # Player movement (only if health > 0)
-        if player_health > 0:
-            keys = pygame.key.get_pressed()
-            if keys[pygame.K_w]:
-                player_pos.y -= player_speed
-            if keys[pygame.K_s]:
-                player_pos.y += player_speed
-            if keys[pygame.K_a]:
-                player_pos.x -= player_speed
-                if not flip:
-                    player_image = pygame.transform.flip(player_image, 1, 0)
-                    flip = True
-            if keys[pygame.K_d]:
-                if flip:
-                    player_image = pygame.transform.flip(player_image, 1, 0)
-                    flip = False
-                player_pos.x += player_speed
+        # Player movement
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_w]:
+            player_pos.y -= player_speed
+        if keys[pygame.K_s]:
+            player_pos.y += player_speed
+        if keys[pygame.K_a]:
+            player_pos.x -= player_speed
+            if not flip:
+                player_image = pygame.transform.flip(player_image, 1, 0)
+                flip = True
+        if keys[pygame.K_d]:
+            if flip:
+                player_image = pygame.transform.flip(player_image, 1, 0)
+                flip = False
+            player_pos.x += player_speed
 
         # Enemy movement: Calculate direction to player and move at 2/4 speed
         direction = player_pos - enemy_pos
@@ -120,20 +116,14 @@ def play():
         # Draw the health bar
         draw_health_bar(SCREEN, player_health, max_health, width, height)
 
+        # Draw the timer
+        draw_timer(SCREEN, start_ticks)
+
+        # If health reaches 0, display "Consumed by Darkness" and a Retry button
+        if player_health <= 0:
+            game_over()
+
         pygame.display.update()
-
-def display_game_over():
-    game_over_font = pygame.font.Font(None, 100)
-    game_over_text = game_over_font.render("You Lose", True, (255, 0, 0))  # Red color
-    game_over_rect = game_over_text.get_rect(center=(width // 2, height // 2))  # Center of the screen
-    SCREEN.blit(game_over_text, game_over_rect)
-    pygame.display.update()
-
-    # Wait for a few seconds before closing
-    pygame.time.wait(3000)  # Wait for 3 seconds
-
-    # Return to the main menu or exit
-    main_menu()
 
 def options():
     global music_playing  # Reference the global music_playing flag
@@ -207,21 +197,74 @@ def draw_health_bar(screen, health, max_health, width, height):
     bar_x = (width - bar_width) // 2
     bar_y = height - bar_height - 20  # Position at the bottom middle of the screen
 
-    # Draw the background of the health bar (gray with no corners)
-    pygame.draw.rect(screen, (169, 169, 169), (bar_x, bar_y, bar_width, bar_height), border_radius=8)
+    # Draw the background of the health bar (light green with no corners)
+    pygame.draw.rect(screen, (144, 238, 144), (bar_x, bar_y, bar_width, bar_height), border_radius=8)  # Light green background
 
     # Calculate the width of the health portion
     health_width = (health / max_health) * bar_width
 
-    # Draw the current health portion (red rectangle)
-    pygame.draw.rect(screen, (255, 0, 0), (bar_x, bar_y, health_width, bar_height), border_radius=8)
+    # Draw the current health portion (green portion)
+    pygame.draw.rect(screen, (0, 255, 0), (bar_x, bar_y, health_width, bar_height), border_radius=8)  # Green portion for current health
+
+    # If health is lost, draw the red portion to represent the lost health
+    if health < max_health:
+        lost_health_width = ((max_health - health) / max_health) * bar_width
+        pygame.draw.rect(screen, (255, 0, 0), (bar_x + health_width, bar_y, lost_health_width, bar_height), border_radius=8)  # Red portion for lost health
 
     # Display the health percentage (centered inside the bar)
     health_percentage = f"{int((health / max_health) * 100)}%"
-    font = pygame.font.Font(None, 30)  # Choose a font and size
+    font = pygame.font.Font(r"Misthios/Code/font.ttf", 30)  # Custom font for health bar
     text = font.render(health_percentage, True, (255, 255, 255))  # White color for the text
     text_rect = text.get_rect(center=(bar_x + bar_width // 2, bar_y + bar_height // 2))  # Center the text
     screen.blit(text, text_rect)
+
+def draw_timer(screen, start_ticks):
+    """Draw the timer in the top-right corner of the screen."""
+    elapsed_time = pygame.time.get_ticks() - start_ticks  # Time in milliseconds
+    seconds = elapsed_time // 1000  # Convert to seconds
+    minutes = seconds // 60  # Get minutes
+    seconds %= 60  # Get remaining seconds
+
+    # Format the timer text
+    timer_text = f"{minutes:02}:{seconds:02}"
+    
+    # Load custom font from Misthios/Code/font.ttf
+    font = pygame.font.Font(r"Misthios/Code/font.ttf", 36)  # Custom font with size 36
+    text = font.render(timer_text, True, (255, 255, 255))  # White text
+    text_rect = text.get_rect(topright=(width - 10, 10))  # Position in the top-right corner
+    screen.blit(text, text_rect)
+
+def game_over():
+    retry_button = Button(image=None, pos=(width // 2, height // 2 + 50), text_input="RETRY", font=get_font(50), base_color="Red", hovering_color="Green")
+    quit_button = Button(image=None, pos=(width // 2, height // 2 + 150), text_input="QUIT", font=get_font(50), base_color="Red", hovering_color="Green")
+
+    while True:
+        SCREEN.fill("black")
+        
+        # Display "Consumed by Darkness" text
+        game_over_text = get_font(80).render("Consumed by Darkness", True, "White")
+        game_over_text_rect = game_over_text.get_rect(center=(width // 2, height // 2 - 50))
+        SCREEN.blit(game_over_text, game_over_text_rect)
+
+        # Update buttons and handle input
+        retry_button.changeColor(pygame.mouse.get_pos())
+        quit_button.changeColor(pygame.mouse.get_pos())
+        retry_button.update(SCREEN)
+        quit_button.update(SCREEN)
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if retry_button.checkForInput(pygame.mouse.get_pos()):
+                    play()  # Restart the game
+                if quit_button.checkForInput(pygame.mouse.get_pos()):
+                    pygame.quit()
+                    sys.exit()
+
+        pygame.display.update()
 
 def main_menu():
     global music_playing  # Reference the global music_playing flag

@@ -60,8 +60,14 @@ def play():
     last_damage_time = 0  # Last time the player took damage
     damage_cooldown = 1500  # 1.5 seconds cooldown in milliseconds
 
+    # Game loop
     while True:
         PLAY_MOUSE_POS = pygame.mouse.get_pos()
+
+        # Check if the player has lost all health
+        if player_health <= 0:
+            display_game_over()
+            return  # Exit the game loop
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -71,22 +77,23 @@ def play():
             if key[pygame.K_BACKSPACE]:
                 main_menu()
 
-        # Player movement
-        keys = pygame.key.get_pressed()
-        if keys[pygame.K_w]:
-            player_pos.y -= player_speed
-        if keys[pygame.K_s]:
-            player_pos.y += player_speed
-        if keys[pygame.K_a]:
-            player_pos.x -= player_speed
-            if not flip:
-                player_image = pygame.transform.flip(player_image, 1, 0)
-                flip = True
-        if keys[pygame.K_d]:
-            if flip:
-                player_image = pygame.transform.flip(player_image, 1, 0)
-                flip = False
-            player_pos.x += player_speed
+        # Player movement (only if health > 0)
+        if player_health > 0:
+            keys = pygame.key.get_pressed()
+            if keys[pygame.K_w]:
+                player_pos.y -= player_speed
+            if keys[pygame.K_s]:
+                player_pos.y += player_speed
+            if keys[pygame.K_a]:
+                player_pos.x -= player_speed
+                if not flip:
+                    player_image = pygame.transform.flip(player_image, 1, 0)
+                    flip = True
+            if keys[pygame.K_d]:
+                if flip:
+                    player_image = pygame.transform.flip(player_image, 1, 0)
+                    flip = False
+                player_pos.x += player_speed
 
         # Enemy movement: Calculate direction to player and move at 2/4 speed
         direction = player_pos - enemy_pos
@@ -114,6 +121,19 @@ def play():
         draw_health_bar(SCREEN, player_health, max_health, width, height)
 
         pygame.display.update()
+
+def display_game_over():
+    game_over_font = pygame.font.Font(None, 100)
+    game_over_text = game_over_font.render("You Lose", True, (255, 0, 0))  # Red color
+    game_over_rect = game_over_text.get_rect(center=(width // 2, height // 2))  # Center of the screen
+    SCREEN.blit(game_over_text, game_over_rect)
+    pygame.display.update()
+
+    # Wait for a few seconds before closing
+    pygame.time.wait(3000)  # Wait for 3 seconds
+
+    # Return to the main menu or exit
+    main_menu()
 
 def options():
     global music_playing  # Reference the global music_playing flag

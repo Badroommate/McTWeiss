@@ -94,7 +94,7 @@ class CentaurBow(Centaur):
         image = pygame.image.load("images/centaur_bow.png")
         image = pygame.transform.scale(image, (200, 200))
         super().__init__(pos, image, speed, health)
-        self.shoot_cooldown = 2000  # ms between shots
+        self.shoot_cooldown = 2000  # milliseconds between shots
         self.last_shot = 0
 
     def try_shoot(self, player_pos, current_time):
@@ -106,7 +106,7 @@ class CentaurBow(Centaur):
             return Arrow(self.pos + pygame.Vector2(100, 100), direction, speed=5)
         return None
 
-# Arrow class
+# Arrow class for bow-wielding enemies
 class Arrow:
     def __init__(self, pos, direction, speed=5):
         self.pos = pygame.Vector2(pos)
@@ -123,7 +123,7 @@ class Arrow:
     def draw(self, screen):
         screen.blit(self.image, self.pos)
 
-# Coin class
+# Coin class for dropped coins
 class Coin:
     def __init__(self, pos, image):
         self.pos = pos.copy()  # Drop coin exactly at enemy's death location
@@ -133,7 +133,7 @@ class Coin:
     def draw(self, screen):
         screen.blit(self.image, self.pos)
 
-# Door class
+# Door class that appears when all enemies are defeated
 class Door:
     def __init__(self, pos, image):
         self.pos = pos
@@ -229,8 +229,10 @@ def play():
     last_dash_time = 0
     last_direction = pygame.Vector2(1, 0)
     
+    # Damage cooldown variables for invincibility after hit
+    damage_cooldown = 1500  # milliseconds
     last_damage_time = 0
-    damage_cooldown = 1500
+    
     start_ticks = pygame.time.get_ticks()
     
     # Initial enemies for level 1
@@ -256,7 +258,7 @@ def play():
                 pygame.quit(); sys.exit()
             if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                 pause_game()
-            # Dash with space key
+            # Dash when space is pressed
             if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
                 if current_time - last_dash_time >= dash_cooldown:
                     player_pos += last_direction * dash_distance
@@ -302,12 +304,25 @@ def play():
                         if enemy.health < 0:
                             enemy.health = 0
 
+            # Check for collision between player and any enemy using rectangles
+            player_rect = pygame.Rect(int(player_pos.x), int(player_pos.y), 200, 200)
             collision_occurred = False
+            for enemy in enemies:
+                enemy_rect = pygame.Rect(int(enemy.pos.x), int(enemy.pos.y), 200, 200)
+                if player_rect.colliderect(enemy_rect):
+                    collision_occurred = True
+                    break
+
+            if collision_occurred:
+                if current_time - last_damage_time >= damage_cooldown:
+                    player_health -= 10
+                    last_damage_time = current_time
+                    if player_health < 0:
+                        player_health = 0
+
             for enemy in enemies:
                 if enemy.health > 0:
                     enemy.update(player_pos)
-                    if player_pos.distance_to(enemy.pos) < 50:
-                        collision_occurred = True
                     if isinstance(enemy, CentaurBow):
                         arrow = enemy.try_shoot(player_pos, current_time)
                         if arrow is not None:
@@ -319,21 +334,13 @@ def play():
                     arrow.pos.y < 0 or arrow.pos.y > height):
                     arrows.remove(arrow)
             
-            player_rect = pygame.Rect(int(player_pos.x), int(player_pos.y), 200, 200)
-            for arrow in arrows[:]:
-                if player_rect.colliderect(arrow.rect):
-                    player_health -= 10
-                    arrows.remove(arrow)
-                    if player_health < 0:
-                        player_health = 0
-
             for enemy in enemies:
                 if enemy.health <= 0 and not enemy.dropped:
                     coins.append(Coin(enemy.pos.copy(), coin_image))
                     enemy.dropped = True
 
             enemies = [enemy for enemy in enemies if enemy.health > 0]
-        # ALWAYS check for coin pickup (regardless of enemy state)
+        # Always check for coin pickup regardless of enemy state
         pickup_range = 75
         player_center = player_pos + pygame.Vector2(100, 100)
         for coin in coins[:]:
@@ -355,7 +362,7 @@ def play():
             coin_text = get_font(30).render("Coins: " + str(player_coins), True, "Yellow")
             SCREEN.blit(coin_text, (10, 10))
         else:
-            # When no enemies remain, draw door on top (door remains until player interacts)
+            # When no enemies remain, draw the door on top while still drawing other elements
             if door is None:
                 door = Door(pygame.Vector2(width//2, height//2), door_image)
             door.draw(SCREEN)
@@ -369,7 +376,7 @@ def play():
             coin_text = get_font(30).render("Coins: " + str(player_coins), True, "Yellow")
             SCREEN.blit(coin_text, (10, 10))
             player_rect = pygame.Rect(int(player_pos.x), int(player_pos.y), 200, 200)
-            # If player touches the door, remove it and spawn 5 random enemies
+            # If player touches the door, remove the door and spawn 5 random enemies
             if player_rect.colliderect(door.rect):
                 new_enemies = []
                 for i in range(5):
@@ -384,7 +391,7 @@ def play():
                     else:
                         new_enemies.append(CentaurBow(pos, centaur_speed, centaur_max_health))
                 enemies = new_enemies
-                door = None
+                door = None  # Door disappears after interaction
                 level = 2  # Change level background
 
         if player_health <= 0:
@@ -403,7 +410,7 @@ def draw_health_bar(screen, health, max_health, width, height):
     if health < max_health:
         lost_health_width = ((max_health - health) / max_health) * bar_width
         pygame.draw.rect(screen, (255,0,0), (bar_x+health_width, bar_y, lost_health_width, bar_height), border_radius=8)
-    health_percentage = f"{int((health / max_health)*100)}%"
+    health_percentage = f"{int((health / max_health) * 100)}%"
     font = pygame.font.Font(r"Code/font.ttf", 30)
     text = font.render(health_percentage, True, (255,255,255))
     text_rect = text.get_rect(center=(bar_x+bar_width//2, bar_y+bar_height//2))

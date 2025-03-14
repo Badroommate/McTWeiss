@@ -221,7 +221,7 @@ class Weapons:
     
     def bow():
         global player_atk_speed,player_damage,player_range, max_health    
-        player_range = 300
+        player_range = 350
         player_atk_speed = 1.3
         player_damage = 30
 
@@ -236,8 +236,14 @@ class Weapons:
 
     def spear():
         global player_atk_speed,player_damage,player_range 
+        player_range = 300
+        player_atk_speed = 0.9
+        player_damage = 25
     def spell():
         global player_atk_speed,player_damage,player_range 
+        player_range = 275
+        player_damage = 75
+        player_atk_speed = .6
     def sword():
         global player_atk_speed,player_damage,player_range
         player_atk_speed = 1
@@ -311,7 +317,7 @@ def starting_room():
     SCREEN.blit(spear_img, (spear_pos))
     SCREEN.blit(spell_img, (spell_pos))
     SCREEN.blit(shield_img, (shield_pos))
-
+# Wepon img variables
     bow_x = bow_img.get_width()
     bow_y = bow_img.get_height()
     sword_x = sword_img.get_width()
@@ -322,12 +328,30 @@ def starting_room():
     spell_y = spell_img.get_height()
     shield_x = spell_img.get_width()
     shield_y = spell_img.get_height()
-
+# Weapon hitboxes
     bow_rec = pygame.Rect(bow_pos,(bow_x,bow_y))
     sword_rec = pygame.Rect(sword_pos,(sword_x,sword_y))
     spear_rec = pygame.Rect(spear_pos,(spear_x,spear_y))
     spell_rec = pygame.Rect(spell_pos,(spell_x,spell_y))
     shield_rec = pygame.Rect(shield_pos,(shield_x,shield_y))
+# Get input for starting weapon
+    player_pos = pygame.Vector2(400, 400)
+    player_rect = pygame.Rect(int(player_pos.x), int(player_pos.y), 200, 200)
+    if player_rect.colliderect(bow_rec):
+        Weapons.bow()
+    if player_rect.colliderect(sword_rec):
+        Weapons.sword()
+    if player_rect.colliderect(spear_rec):
+        Weapons.spear()
+    if player_rect.colliderect(spell_rec):
+        Weapons.spell()
+    if player_rect.colliderect(shield_rec):
+        Weapons.shield()
+
+
+
+
+
 
 max_health = 100
 player_health = max_health
@@ -338,6 +362,14 @@ player_speed = 250
 
 def play():
     global flip, death_sound_played, max_health,player_health,player_damage,player_range,player_atk_speed,player_speed
+    
+    max_health = 100
+    player_health = max_health
+    player_damage = 25
+    player_range = 250
+    player_atk_speed = 1
+    player_speed = 250
+
     flip = False
     death_sound_played = False
     clock = pygame.time.Clock()
@@ -460,7 +492,7 @@ def play():
         player_rect = pygame.Rect(int(player_pos.x), int(player_pos.y), 200, 200)
         collision_occurred = False
         for enemy in enemies:
-            enemy_rect = pygame.Rect(int(enemy.pos.x), int(enemy.pos.y), 200, 200)
+            enemy_rect = pygame.Rect(int(enemy.pos.x), int(enemy.pos.y), 100, 100)
             if player_rect.colliderect(enemy_rect):
                 collision_occurred = True
                 break
@@ -662,9 +694,11 @@ def game_over():
                 pygame.quit(); sys.exit()
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if retry_button.checkForInput(pygame.mouse.get_pos()):
-                    if flip == True:
-                        flip = False
+                    # if flip == True:
+                    #     flip = False
+
                     play()
+
                 if quit_button.checkForInput(pygame.mouse.get_pos()):
                     main_menu()
         pygame.display.update()
